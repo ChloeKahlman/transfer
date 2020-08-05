@@ -1,0 +1,8 @@
+[package]
+name = "transfer"
+version = "0.1"
+lean_version = "leanprover-community/lean:3.17.1"
+path = "src"
+
+[dependencies]
+mathlib = {git = "https://github.com/leanprover-community/mathlib", rev = "90d33863bbaf3a668b8cc18ae814c50e0aef217c"}
