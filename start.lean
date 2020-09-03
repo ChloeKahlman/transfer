@@ -88,6 +88,8 @@ axiom eventransferfromz2  : ∀ x : Z2, ∀ y : int, evenZ2 x → ztoz2 y = x �
 
 axiom transfer_add_2 : ∀ x y : Z2, ∀ m n : int, ztoz2 m = x → ztoz2 n = y → x.add y = ztoz2 (m + n)
 
+axiom ztoz2surj : function.surjective ztoz2
+
 --theorem about even numbers
 theorem thetheoremforint : ∀ m n : int, ¬ even m → ¬ even n → even (m + n) := sorry
 
@@ -96,14 +98,36 @@ theorem thetheoremforZ2 : ∀ x y : Z2, ¬ evenZ2 x → ¬ evenZ2 y → evenZ2 (
 begin
     intros,
     --pick numbers such that m % 2 = x, n % 2 = y
-    rw transfer_add_2,
+    --rw transfer_add_2,
+    --apply eventransfertoz2,
+    --apply thetheoremforint,
+    let m := classical.some (ztoz2surj x),
+    let n := classical.some (ztoz2surj y),
+    have mx: ztoz2 m = x := classical.some_spec(ztoz2surj x),
+    have ny : ztoz2 n = y := classical.some_spec(ztoz2surj y),
+
+    rw← mx,
+    rw← ny,
+    rw transfer_add,
     apply eventransfertoz2,
     apply thetheoremforint,
-    have test: ¬ even 1 := sorry,
-    apply test,
-    have test: ¬ even 1 := sorry,
-    apply test,
-    sorry -- WIP 
+
+
+    
+   -- have : ¬ even m,
+   { finish using [eventransfertoz2] },
+   -- have : ¬ even n,
+   { finish using [eventransfertoz2] },
+
+   
+   -- assumption,
+   -- assumption,
+   -- assumption,
+    --have test: ¬ even 1 := sorry,
+    --apply test,
+    --have test: ¬ even 1 := sorry,
+    --apply test,
+  --  sorry --  WIP 
 end
 
     --adding two odd numbers in Z2, so one.add one
