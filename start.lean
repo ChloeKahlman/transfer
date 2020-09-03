@@ -1,16 +1,12 @@
 import topology.basic
 
+--lean is working
 #check topological_space
-
 #eval 1+1
-
 theorem add_one_one : 1 + 1 = 2 := by refl
 
 
-
-
-
--- this is a comment
+--EXAMPLE 1: transfering order from nat to custom nat (bijection)
 
 -- a type N
 def N : Type := sorry
@@ -53,10 +49,10 @@ begin
     assumption,
 end
 
+--TODO thetheoremfornatagain
 
 
-
---GOAL transfer the theorem that odd+odd=even from z to z mod 2 and back.
+--EXAMPLE 2: transfer the theorem that odd+odd=even from z to z mod 2 and back.
 
 --even and odd on Z
 definition even (n : int) : Prop := n % 2 = 0
@@ -81,7 +77,6 @@ inductive evenZ2 : Z2 → Prop
 --transfer function (mod 2)
 def ztoz2 : int → Z2 := λ n, if n % 2 = 0 then zero else one
 
-
 --transfer respects add
 axiom transfer_add : ∀ m n : int, (ztoz2 m).add (ztoz2 n) = ztoz2(m + n)
 
@@ -91,7 +86,7 @@ axiom eventransfertoz2 : ∀ n : int, even n → evenZ2 (ztoz2 n)
 --DIRECTION Z2 to Z
 axiom eventransferfromz2  : ∀ x : Z2, ∀ y : int, evenZ2 x → ztoz2 y = x → even y
 
-axiom transfer_add_2 : ∀ x y : Z2, ∀ m n : int, ztoz2 m = x → ztoz2 n = y → x.add y = ztoz2(m + n)
+axiom transfer_add_2 : ∀ x y : Z2, ∀ m n : int, ztoz2 m = x → ztoz2 n = y → x.add y = ztoz2 (m + n)
 
 --theorem about even numbers
 theorem thetheoremforint : ∀ m n : int, ¬ even m → ¬ even n → even (m + n) := sorry
@@ -102,6 +97,12 @@ begin
     intros,
     --pick numbers such that m % 2 = x, n % 2 = y
     rw transfer_add_2,
+    apply eventransfertoz2,
+    apply thetheoremforint,
+    have test: ¬ even 1 := sorry,
+    apply test,
+    have test: ¬ even 1 := sorry,
+    apply test,
     sorry -- WIP 
 end
 
@@ -111,8 +112,7 @@ end
     --even number % 2 is even too
     --this result is equal to adding in Z2
 
-
-
+    --classical.some to pick one of the ints 
 
 theorem thetheoremforZ2again : ∀ x y : Z2, ¬ evenZ2 x → ¬ evenZ2 y → evenZ2 (add x y) := 
 begin --practice proof
@@ -155,5 +155,9 @@ have addinZ2iseven : evenZ2 ((ztoz2 x).add (ztoz2 y)) :=
 
 apply addinZ2iseven,
 
-simp [transferrespectsadd],
+simp [transfer_add],
 end
+
+
+
+-- EXAMPLE 3: do an example with injection natural numbers to integers
