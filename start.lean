@@ -220,14 +220,55 @@ axiom inverse1way : ∀ n : nat, nofi(ntoi n) = n
 --axiom transfer_add : ∀ m n : nat, ntoi m + ntoi n = ntoi (m + n)
 axiom transfer_add2 : ∀ x y : int, nofi x + nofi y = nofi (x + y)
 
---axiom eventoint : ∀ n : nat, even n → evenint (ntoi n)
-axiom evenfromint : ∀ x : int, evenint x → even (nofi x)
+--axiom eventoint : ∀ (x : int), even (nofi x) → evenint x
+--axiom eventoint : ∀ n : nat, even n → evenint (ntoi n) --verkeerd om
+--axiom evenfromint : ∀ x : int, evenint x → even (nofi x)
+
+--axiom eventoint' : ∀ x : int, even (nofi x) → evenint x
+--lemma eventoint : ∀ n : nat, even n → evenint (ntoi n) :=
+--λ n hn, eventoint' _ (inverse1way n ▸ hn)
+
+--axiom evenfromint' : ∀ x : int, evenint x → even (nofi x)
+--lemma evenfromint : ∀ n : nat, evenint (ntoi n) → even n :=
+--λ n hn, inverse1way n ▸ evenfromint' _ hn
+
+axiom eventoint': ∀ x : int, even (nofi x) → evenint x
+lemma eventoint : ∀ n : nat, even n → evenint (ntoi n) :=
+λ n hn, eventoint' _ (by { rw  ← inverse1way n, exact hn })
+
+axiom evenfromint' : ∀ x : int, evenint x → even (nofi x)
+lemma evenfromint : ∀ n : nat, evenint (ntoi n) → even n :=
+λ n hn, by { rw ← inverse1way n, exact evenfromint' _ hn }
 
 theorem thetheoremfornat : ∀ m n : nat, ¬ even m → ¬ even n → even (m + n) := sorry
 
 theorem thetheoremforint : ∀ x y : int, ¬ evenint x → ¬ evenint y → evenint (x + y) :=
-begin
+begin 
   intros,
+  apply eventoint',
+  rw← transfer_add2,
+  apply thetheoremfornat;
+  finish using [eventoint'],
+
+
+  --have addinnatiseven : even ((nofi x).add (nofi y)) :=
+  --begin
+  --  apply thetheoremfornat,
+
+  --  intro bla2,
+  --  apply a,
+  --  apply eventoint',
+  --  apply bla2,
+
+  --  intro bla2,
+  --  apply a_1,
+  --  apply eventoint',
+  --  apply bla2,
+  --end,
+
+--  rw ←transfer_add2,
+  --apply addinnatiseven,
+end
 
   --Cant do this:
   --let m be such that ntoi m = x
@@ -235,10 +276,6 @@ begin
 
   --let m = nofi x
   --let n = nofi y
-
-
-
-
 
   -- old
   --have test: even (nofi x + nofi y) :=
@@ -253,7 +290,7 @@ begin
     --rw transfer_add2,
   --sorry, sorry  
   --end,
-end
+--end
 
 theorem thetheoremfornatagain : ∀ m n : nat, ¬ even m → ¬ even n → even (m + n) :=
 begin
@@ -261,9 +298,9 @@ begin
   rw← inverse1way m at *,
   rw← inverse1way n at *,
   rw transfer_add2,
-  apply evenfromint,
+  apply evenfromint',
   apply thetheoremforint;
-  finish using [evenfromint],
+  finish using [evenfromint'],
 end   
 
 end example3
