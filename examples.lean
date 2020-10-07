@@ -2,7 +2,7 @@ import tactic.finish
 
 
 -- EXAMPLE 1: transfering ordering <= from nat to custom nat (bijection)
--- this example is based on the one in article ...
+-- this example is based on the one in the article by Zimmermann and Herbelin, 2015
 namespace example1
 
 -- a custom type N that is the natural numbers, with an ordering like <=
