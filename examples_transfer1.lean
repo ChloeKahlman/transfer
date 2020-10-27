@@ -14,14 +14,6 @@ def ordern : N → N → Prop := sorry
 def nto : N → nat := sorry
 def nof : nat → N := sorry
 
--- -- axioms needed for transfer:
--- -- the nto and nof are inverses
--- axiom ax1 : ∀ n : nat, nto(nof(n)) = n
--- axiom ax2 : ∀ x : N, nof(nto(x)) = x
--- -- ordering is preserved by the mapping
--- axiom ax3 : ∀ x y : N, ordern x y → nto x <= nto y 
--- axiom ax4 : ∀ m n : nat, m <= n → ordern (nof m) (nof n)
-
 axiom nto_surj : function.surjective nto
 axiom nof_surj : function.surjective nof
 axiom le_ordern_nof : ∀ m n : nat, m <= n → ordern (nof m) (nof n)
@@ -40,13 +32,6 @@ theorem transitiveorder_nat' : ∀ x y z : nat, x <= y → y <= z → x <= z :=
 begin 
   transfer.transfer1 ``(nof_surj) [``(ordern_nof_le _ _)] [``(le_ordern_nof), ``(transitiveorder_nat)],
   -- ! exact same command
-
-  -- intros,
-  -- rw← ax1 x,
-  -- rw← ax1 z,
-  -- apply ax3,
-  -- apply transitiveorder_N _ (nof y) _;
-  -- finish using [ax4]
 end
 
 end example1
@@ -76,10 +61,8 @@ inductive Z2.even : Z2 → Prop
 def ztoz2 : int → Z2 := λ n, if n % 2 = 0 then zero else one
 
 -- axioms needed for transfer:
--- mapping is surjective
 axiom surjectivemap : function.surjective ztoz2
--- mapping respects add and even (there must be transfer axioms for every operation and predicate in the theorem)
-axiom transfer_add : ∀ m n : int, (ztoz2 m).add (ztoz2 n) = ztoz2(m + n)
+-- axiom transfer_add : ∀ m n : int, (ztoz2 m).add (ztoz2 n) = ztoz2(m + n)
 axiom transfer_add' : ∀ m n : int, ztoz2(m + n) = (ztoz2 m).add (ztoz2 n)
 axiom eventoz2 : ∀ n : int, even n → Z2.even (ztoz2 n)
 axiom evenfromz2 : ∀ n : int, Z2.even (ztoz2 n) → even n  -- specific wording of the axioms makes the proof go nicely
@@ -108,15 +91,13 @@ definition even (n : nat) : Prop := n % 2 = 0
 definition evenint (x : int) : Prop := x % 2 = 0
 
 -- mapping between nat and int
-def ntoi : nat → int := int.of_nat --in all example cases the implementations are optional and not necessary for the proofs (nice to have for computation later?)
+def ntoi : nat → int := int.of_nat
 def nofi : int → nat := int.nat_abs
 
 -- axioms needed for transfer:
-axiom inverse1way : ∀ n : nat, nofi(ntoi n) = n
+-- axiom inverse1way : ∀ n : nat, nofi(ntoi n) = n
 axiom nofi_surj : function.surjective nofi
--- respect add
 axiom transfer_add : ∀ x y : int, nofi x + nofi y = nofi (x + y)
--- respect even
 axiom eventoint: ∀ x : int, even (nofi x) → evenint x
 axiom evenfromint : ∀ x : int, evenint x → even (nofi x)
 
@@ -133,52 +114,3 @@ begin
 end
 
 end example3
-
-
--- EXAMPLE 4: the ordering theorem but with int and nat
-namespace example4
-
--- mapping between nat and int
-def ntoi : nat → int := int.of_nat
-def nofi : int → nat := int.nat_abs
-
--- axioms needed for transfer:
--- 1 direction is invertible
-axiom inverse1way : ∀ n : nat, nofi(ntoi n) = n
-
--- ordering is not really preserved by the mapping, which poses a problem
--- ∀ x y : int, x <= y → nofi x <= nofi y     does not hold
--- ∀ x y : int, nofi x <= nofi y → x <= y     does not hold
--- axiom order_ntoi : ∀ m n : nat, m <= n → ntoi m <= ntoi n      not useful
-axiom order_nofi : ∀ x y : int, x <= y → nofi x <= nofi y ∨ nofi y <= nofi x    -- doesn't go anywhere
-
--- transfer approach does not seem to work for this problem
--- idea: smaller axioms ie x<=y and x>0 → nofi x <= nofi y
---                         x<=y and x<0 and y>0 → either is larger
---                         x<=y and x<0 and y<0 → nofi x >= nofi y
---   and split on cases <0 >0
--- doesn't seem too useful either 
-
-theorem transitiveorder_nat : ∀ a b c : nat, a <= b → b <= c → a <= c := sorry
-
-theorem transitiveorder_int : ∀ x y z : int, x <= y → y <= z → x <= z :=
-begin
-  intros,
-  have hnxy : nofi x <= nofi y ∨ nofi y <= nofi x := by apply order_nofi _ _ a,
-  have hnyz : nofi y <= nofi z ∨ nofi z <= nofi y := by apply order_nofi _ _ a_1,
-  cases hnxy; cases hnyz,
-
-  have hnxz : nofi x <= nofi z := begin apply transitiveorder_nat _ _ _ hnxy hnyz end,
-  repeat {sorry},
-end
-
-theorem transitiveorder_nat' : ∀ a b c : nat, a <= b → b <= c → a <= c :=
-begin
-  intros,
-  rw← inverse1way a at *,
-  rw← inverse1way b at *,
-  rw← inverse1way c at *,
-  sorry
-end
-
-end example4
