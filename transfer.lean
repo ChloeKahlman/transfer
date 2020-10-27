@@ -1,14 +1,37 @@
 import tactic
+
 open tactic.interactive
+open interactive.types
 
+open interactive
 
-namespace transfer
+open lean.parser
+
 
 def mylist : list nat := [0,1]
 
 #check pexpr
+#check tactic.interactive.apply
 
-meta def transfer1 (surjectivemap : pexpr) (operations : list pexpr) (oldtheorem : pexpr) : tactic unit := 
+meta def tactic.interactive.apply_at  (h : parse texpr) (f : parse (tk "using" *> texpr)) : tactic unit := 
+do
+  h' ← tactic.i_to_expr_for_apply h,
+  tactic.interactive.replace (expr.local_pp_name h') none (f h)
+
+#check interaction_monad_orelse
+
+meta def my_orelse {α : Type*} (t₁ t₂ : tactic α) : tactic α :=
+λ s, interaction_monad.result.cases_on (t₁ s)
+  interaction_monad.result.success
+  (λ e₁ ref₁ s', interaction_monad.result.cases_on ((trace ((e₁.get_or_else sorry) ()) >> t₂) s)
+     interaction_monad.result.success
+     interaction_monad.result.exception)
+
+infix `<||>` : 2 := my_orelse 
+
+namespace transfer
+
+meta def transfer1 (surjectivemap : pexpr) (operations : list pexpr) (finishing : list pexpr) : tactic unit := 
 do
 -- move things to assumptions
   tactic.intros,
@@ -29,22 +52,30 @@ do
   --skip
   --,
 
---  tactic.repeat (
+  trace_state,
+
+  tactic.repeat (
     operations.foldr (
       λ op rest, 
         rest
-        <|>
+        <||>
         (tactic.i_to_expr_for_apply >=> tactic.apply) op >> skip
-        <|>
+        <||>
         tactic.interactive.rw (rw_rules_t.mk [(rw_rule.mk ⟨0,0⟩ tt op)] none) interactive.loc.wildcard
-    ) (tactic.fail "oeps"),
+        <||>
+        ( do
+        l2 ← tactic.local_context,
+        
+        l2.foldr (λ h rest2, rest2 <||> tactic.interactive.apply_at (to_pexpr h) op) (tactic.fail "foldr2 fail"),
 
+        skip
+        )
+    ) (tactic.fail "oeps")
+  <||> tactic.fail "exit repeat"),
 
---  )
+  tactic.interactive.finish [] finishing,
 
-    tactic.interactive.finish [] [oldtheorem],
-
-    skip
+  skip
 
   --tactic.repeat (
   --operations.mmap' (λ h, tactic.try 
@@ -61,12 +92,23 @@ do
 
 --finish
 --skip
+end transfer
 
-meta def apply_at (myfunction : pexpr) (mylocation : interactive.parse interactive.types.location) : tactic unit := 
-do
-  -- make name mylocation_1
+--open parser
 
-  -- have name := myfunction mylocation (met underscores?)
+--meta def tactic.interactive.apply_at  (h : parse ident) (f : parse texpr) : tactic unit := 
+--do
+--  tactic.interactive.replace h none (f ( h))
+
+--name naar tactic.expr = get_local in tactic.lean
+
+theorem test (a b : Type) (ha : a) (hab : a → b) : b := 
+begin
+  --apply_at ha using hab,
+  apply_at hab ha using id,
+  assumption,
+  -- assumption, --finding ha_1
+end  
 
 
 def N : Type := sorry
@@ -77,14 +119,25 @@ def nof : nat → N := sorry
 axiom nto_surj : function.surjective nto
 axiom nof_surj : function.surjective nof
 axiom le_ordern_nof : ∀ m n : nat, m <= n → ordern (nof m) (nof n)
-axiom le_ordern_nof_iff : ∀ m n : nat,  m <= n ↔ ordern (nof m) (nof n)
+axiom le_ordern_nof_iff : ∀ m n : nat,  m <= n ↔ ordern (nof m) (nof n) --temp hack
 axiom ordern_nof_le : ∀ m n : nat, ordern (nof m) (nof n) → m <= n
 
 theorem transitiveorder_nat : ∀ x y z : nat, x <= y → y <= z → x <= z := sorry
 
 theorem transitiveorder_N : ∀ x y z : N, ordern x y → ordern y z → ordern x z :=
 begin
-  transfer1 ``(nof_surj) [``(le_ordern_nof_iff)] ``(transitiveorder_nat),
+  -- intros,
+  -- rw [← classical.some_spec (nof_surj x)] at *,
+  -- rw [← classical.some_spec (nof_surj y)] at *,
+  -- rw [← classical.some_spec (nof_surj z)] at *,
+
+  -- apply_at a using ordern_nof_le _ _,
+  -- apply_at a_1 using ordern_nof_le _ _,
+
+  -- apply le_ordern_nof,
+  -- finish using [transitiveorder_nat],
+
+  transfer.transfer1 ``(nof_surj) [``(ordern_nof_le _ _)] [``(le_ordern_nof), ``(transitiveorder_nat)],
 
   --``(le_ordern_nof_iff)
 
@@ -135,8 +188,11 @@ theorem thetheoremforint : ∀ m n : int, ¬ even m → ¬ even n → even (m + 
 
 theorem thetheoremforZ2 : ∀ x y : Z2, ¬ Z2.even x → ¬ Z2.even y → Z2.even (Z2.add x y) := 
 begin
-  transfer1 ``(surjectivemap) [``(transfer_add), ``(eventoz2)] ``(thetheoremforint),
+  intros,
+  transfer.transfer1 ``(surjectivemap) [``(transfer_add), ``(eventoz2)] [``(eventoz2), ``(thetheoremforint)],
   
+  --apply met not 
+
   -- intros,
   -- rw [← classical.some_spec (surjectivemap x)] at *,
   -- rw [← classical.some_spec (surjectivemap y)] at *,
